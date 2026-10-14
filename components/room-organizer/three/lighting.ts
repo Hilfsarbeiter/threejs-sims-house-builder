@@ -282,7 +282,7 @@ function computeClearSkyProfile(hour: number): SkyProfile {
   const position: Vec3 = [Math.sin(azimuth) * 10, elevation * 10 + 1, Math.cos(azimuth) * 5];
 
   // Warmth: high at sunrise/sunset, low at noon (white); the afterglow keeps it.
-  const warmth = sunAboveHorizon ? Math.pow(1 - Math.abs(dayFraction - 0.5) * 2, 2) : 1;
+  const warmth = sunAboveHorizon ? Math.pow(Math.abs(dayFraction - 0.5) * 2, 2) : 1;
   const noonness = sunAboveHorizon ? Math.sin(dayFraction * Math.PI) : 0;
 
   const sunColor = mixHex(0xffffff, 0xff8a50, warmth * 0.7);

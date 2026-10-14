@@ -7,6 +7,7 @@ import { useAchievements } from './hooks/use-achievements';
 import { useCameraPresets } from './hooks/use-camera-presets';
 import { useCameraVision } from './hooks/use-camera-vision';
 import { useCanvas2DInteraction } from './hooks/use-canvas-2d-interaction';
+import { useFloorHighlight } from './hooks/use-floor-highlight';
 import { useFloorKeepOut } from './hooks/use-floor-keep-out';
 import { useHistory } from './hooks/use-history';
 import { useImportExport } from './hooks/use-import-export';
@@ -17,6 +18,7 @@ import { useKeyboardShortcuts } from './hooks/use-keyboard-shortcuts';
 import { useLayoutPersistence } from './hooks/use-layout-persistence';
 import { useLayoutState } from './hooks/use-layout-state';
 import { layoutStore } from './hooks/use-layout-store';
+import { useMaterialTarget } from './hooks/use-material-target';
 import { useNpcs } from './hooks/use-npcs';
 import { usePeopleModel } from './hooks/use-people-model';
 import { useRecentColors } from './hooks/use-recent-colors';
@@ -54,6 +56,7 @@ import { WallDisplayPill } from './panels/wall-display-pill';
 import { WelcomeBanner } from './panels/welcome-banner';
 import { ZoneNameChip } from './panels/zone-name-chip';
 import type { HoverInfo } from './hooks/use-three-scene';
+import type { MaterialTarget } from './lib/materials';
 import type { GameMode } from './lib/types';
 import type { CatalogItem, RoomLayout, ViewSettings, WallId } from './lib/types';
 
@@ -159,6 +162,9 @@ export function RoomOrganizer(): JSX.Element {
   const [measurementPoints, setMeasurementPoints] = useState<ReadonlyArray<{ x: number; z: number }>>([]);
   const [wallDraft, setWallDraft] = useState<{ x: number; z: number } | null>(null);
   const [pointerWorld, setPointerWorld] = useState<{ x: number; z: number } | null>(null);
+  // Moodboard material mode (Etappe 2); build HUD only, and never alongside the wall tool.
+  const [materialMode, setMaterialMode] = useState(false);
+  const materialActive = materialMode && gameMode !== 'live' && !view.drawWallMode;
 
   const wallSnapResult = useMemo(() => {
     if (!view.drawWallMode || !pointerWorld) return null;
@@ -655,6 +661,64 @@ export function RoomOrganizer(): JSX.Element {
     [activeFloor.items, selectedItemId]
   );
 
+  const { target: materialTarget, selectFloor: selectMaterialFloor } = useMaterialTarget({
+    enabled: materialActive,
+    selectedWall,
+    selectedItem,
+    activeFloorId: activeFloor.id,
+  });
+
+  // Moodboard rows and floor clicks pick a surface through the existing wall
+  // and item selections; only the floor has its own target flag.
+  const selectMaterialTarget = useCallback(
+    (target: MaterialTarget) => {
+      switch (target.kind) {
+        case 'floor':
+          setSelectedWall(null);
+          selectOnly(null);
+          selectMaterialFloor();
+          break;
+        case 'wall':
+          setSelectedWall({ id: target.wall, kind: 'exterior' });
+          break;
+        case 'interior-wall':
+          setSelectedWall({ id: target.id, kind: 'interior' });
+          break;
+        case 'upholstery':
+          setSelectedWall(null);
+          selectOnly(target.itemId);
+          break;
+        case 'all-walls':
+          break;
+      }
+    },
+    [selectOnly, selectMaterialFloor]
+  );
+  const handleMaterialFloorClick = useCallback(
+    () => selectMaterialTarget({ kind: 'floor' }),
+    [selectMaterialTarget]
+  );
+  // One surface at a time: a wall picked in 3D drops the item selection and
+  // vice versa, so only the painted surface shows a highlight.
+  useEffect(() => {
+    if (!materialTarget) return;
+    const isWall = materialTarget.kind === 'wall' || materialTarget.kind === 'interior-wall';
+    if (!isWall && selectedWall) setSelectedWall(null);
+    if (materialTarget.kind !== 'upholstery' && selectedItemId !== null) selectOnly(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialTarget]);
+  const changeMaterialMode = useCallback(
+    (active: boolean) => {
+      setMaterialMode(active);
+      // The wall tool claims every floor click; material mode needs them.
+      if (active) setView((v) => (v.drawWallMode ? { ...v, drawWallMode: false } : v));
+    },
+    [setView]
+  );
+  useEffect(() => {
+    if (view.drawWallMode) setMaterialMode(false);
+  }, [view.drawWallMode]);
+
   const hasSignalItems = useMemo(
     () => activeFloor.items.some((item) => item.isWiFiAccessPoint || item.isCCTV),
     [activeFloor.items]
@@ -737,7 +801,8 @@ export function RoomOrganizer(): JSX.Element {
       onItemDragEnd: handleDragEnd,
       onItemDragCancel: handleDragCancel,
       onItemHover: setHover,
-      onEmptyClick: handleEmptyClick,
+      // Material mode picks the floor as a surface; the distance tool still wins.
+      onEmptyClick: materialActive && !view.measurementMode ? handleMaterialFloorClick : handleEmptyClick,
       onWallSelect: ({ wallId, kind }) => {
         setSelectedWall({ id: wallId, kind });
       },
@@ -752,6 +817,17 @@ export function RoomOrganizer(): JSX.Element {
 
   sceneBoxRef.current = sceneRef;
   invalidateBoxRef.current = invalidate;
+
+  useFloorHighlight({
+    enabled: materialTarget?.kind === 'floor' && !view.view2D,
+    isReady,
+    invalidate,
+    threeModuleRef,
+    sceneRef,
+    width: layout.width,
+    depth: layout.height,
+    floorY: activeFloorY,
+  });
 
   const { lockRefused: walkthroughLockRefused } = useWalkthrough({
     enabled: isReady && walkthroughActive,
@@ -1234,6 +1310,10 @@ export function RoomOrganizer(): JSX.Element {
       <BottomHud
         selectedWall={selectedWall}
         onSelectedWallChange={setSelectedWall}
+        materialMode={materialActive}
+        onMaterialModeChange={changeMaterialMode}
+        materialTarget={materialTarget}
+        onSelectMaterialTarget={selectMaterialTarget}
         onOrbit={(direction) => {
           const THREE = threeModuleRef.current;
           const camera = cameraRef.current;

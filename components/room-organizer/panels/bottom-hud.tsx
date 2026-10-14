@@ -12,9 +12,14 @@ import { surpriseLayout } from '../lib/surprise';
 import { BuildToolsPanel, type BuildToolCategory } from './build-tools-panel';
 import { CameraPad } from './camera-pad';
 import { CatalogStrip } from './catalog-strip';
+import { DaylightPanel } from './daylight-panel';
+import { MaterialStrip } from './material-strip';
 import { ModePanel } from './mode-panel';
+import { MoodPanel } from './mood-panel';
+import { MoodboardPanel } from './moodboard-panel';
 import { RoomShapesPanel } from './room-shapes-panel';
 import { WallPaintPanel } from './wall-paint-panel';
+import type { MaterialTarget } from '../lib/materials';
 import type { CatalogItem } from '../lib/types';
 import type { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
@@ -27,9 +32,26 @@ export interface BottomHudProps {
   /** Read by the camera pad's zoom slider (#167). */
   controlsRef: MutableRefObject<OrbitControls | null>;
   placeCatalogItem(catalogItem: CatalogItem, position?: { x: number; z: number }): string;
+  /** Material mode (Etappe 2): the material strip replaces the catalog. */
+  materialMode: boolean;
+  onMaterialModeChange(active: boolean): void;
+  materialTarget: MaterialTarget | null;
+  onSelectMaterialTarget(target: MaterialTarget): void;
 }
 
-export function BottomHud({ selectedWall, onSelectedWallChange, onOrbit, onZoom, onFit, controlsRef, placeCatalogItem }: BottomHudProps): JSX.Element {
+export function BottomHud({
+  selectedWall,
+  onSelectedWallChange,
+  onOrbit,
+  onZoom,
+  onFit,
+  controlsRef,
+  placeCatalogItem,
+  materialMode,
+  onMaterialModeChange,
+  materialTarget,
+  onSelectMaterialTarget,
+}: BottomHudProps): JSX.Element {
   const { layout, activeFloor, actions, view, toggle, setView, isReady, error, gameMode, setGameMode, playCue } = useRoomEditor();
   const { selectOnly, setSelectedItemId, setExtraSelectedIds } = useSelection();
   const [buildToolCategory, setBuildToolCategory] = useState<BuildToolCategory>('seating');
@@ -72,8 +94,17 @@ export function BottomHud({ selectedWall, onSelectedWallChange, onOrbit, onZoom,
             scrollbarWidth: 'thin',
           }}
         >
-          {/* Paint panel opens with the wall tool OR when any wall is clicked in 3D. */}
-          {(view.drawWallMode || selectedWall !== null) && (
+          <DaylightPanel />
+          <MoodboardPanel
+            active={materialMode}
+            onActiveChange={onMaterialModeChange}
+            target={materialTarget}
+            onSelectTarget={onSelectMaterialTarget}
+          />
+          <MoodPanel />
+          {/* Paint panel opens with the wall tool OR when any wall is clicked in 3D
+              (material mode paints walls from its own strip instead). */}
+          {(view.drawWallMode || (selectedWall !== null && !materialMode)) && (
             <WallPaintPanel
               selectedWall={selectedWall}
               onSelectedWallChange={onSelectedWallChange}
@@ -133,10 +164,15 @@ export function BottomHud({ selectedWall, onSelectedWallChange, onOrbit, onZoom,
           )}
         </div>
       ) : (
-        <div />
+        // EXPLORE hides the build tools, but the light stays adjustable.
+        <div className="pc-hud-left">
+          <DaylightPanel />
+        </div>
       )}
 
-      {gameMode !== 'live' ? (
+      {gameMode !== 'live' && materialMode ? (
+        <MaterialStrip target={materialTarget} />
+      ) : gameMode !== 'live' ? (
         <CatalogStrip
           // The strip follows the mode's tool, so DESIGN browses structure
           // and FURNISH furniture; the wall tool browses the openings that
