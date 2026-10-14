@@ -15,6 +15,7 @@ import { CatalogStrip } from './catalog-strip';
 import { DaylightPanel } from './daylight-panel';
 import { MaterialStrip } from './material-strip';
 import { ModePanel } from './mode-panel';
+import { MoodPanel } from './mood-panel';
 import { MoodboardPanel } from './moodboard-panel';
 import { RoomShapesPanel } from './room-shapes-panel';
 import { WallPaintPanel } from './wall-paint-panel';
@@ -100,6 +101,7 @@ export function BottomHud({
             target={materialTarget}
             onSelectTarget={onSelectMaterialTarget}
           />
+          <MoodPanel />
           {/* Paint panel opens with the wall tool OR when any wall is clicked in 3D
               (material mode paints walls from its own strip instead). */}
           {(view.drawWallMode || (selectedWall !== null && !materialMode)) && (

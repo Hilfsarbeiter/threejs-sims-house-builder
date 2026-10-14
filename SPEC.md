@@ -18,8 +18,8 @@ Ergänzungen zum bestehenden Haus-Builder. Raum, Möbel und Drag & Drop sind sch
 
 ## Etappe 3 – Stimmungen
 
-- [ ] Presets (z. B. Cozy, Bright, Moody) setzen Materialien und Uhrzeit auf einmal
-- [ ] Zustand speichern und laden (vorhandene Speicherlogik nutzen, sonst localStorage)
+- [x] Presets (z. B. Cozy, Bright, Moody) setzen Materialien und Uhrzeit auf einmal
+- [x] Zustand speichern und laden (vorhandene Speicherlogik nutzen, sonst localStorage)
 
 ## Später (optional)
 
