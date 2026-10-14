@@ -11,10 +11,10 @@ Ergänzungen zum bestehenden Haus-Builder. Raum, Möbel und Drag & Drop sind sch
 
 ## Etappe 2 – Materialien
 
-- [ ] Katalog mit Kategorien: Holz, Stein, Stoff, Farbe (vorhandene Wand-/Bodenstile einbinden)
-- [ ] Fläche anklicken (Boden, Wand, Polster) → hervorheben
-- [ ] Material aus Leiste wählen → wird auf Fläche angewendet
-- [ ] Moodboard-Panel zeigt aktuelle Zuordnung je Fläche
+- [x] Katalog mit Kategorien: Holz, Stein, Stoff, Farbe (vorhandene Wand-/Bodenstile einbinden)
+- [x] Fläche anklicken (Boden, Wand, Polster) → hervorheben
+- [x] Material aus Leiste wählen → wird auf Fläche angewendet
+- [x] Moodboard-Panel zeigt aktuelle Zuordnung je Fläche
 
 ## Etappe 3 – Stimmungen
 
