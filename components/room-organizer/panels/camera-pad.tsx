@@ -236,6 +236,8 @@ export function CameraPad(props: CameraPadProps): JSX.Element {
           aria-label="Zoom"
           style={{
             flex: 1,
+            // Shrink below the range input's intrinsic width to fit the pad.
+            minWidth: 0,
             accentColor: 'var(--pc-cyan-glow)',
             height: 18,
           }}

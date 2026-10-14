@@ -73,7 +73,9 @@ export function SliderRow(props: SliderRowProps): JSX.Element {
         value={value}
         disabled={disabled}
         onChange={(event) => onChange(parseFloat(event.target.value))}
-        style={{ flex: 1, accentColor: 'var(--pc-cyan-glow)' }}
+        // minWidth 0: a range input's intrinsic width (~130px) would otherwise
+        // keep it from shrinking and push it past a narrow panel's edge.
+        style={{ flex: 1, minWidth: 0, accentColor: 'var(--pc-cyan-glow)' }}
       />
       <span
         style={{

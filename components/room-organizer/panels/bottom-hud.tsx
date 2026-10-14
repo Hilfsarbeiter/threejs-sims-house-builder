@@ -12,6 +12,7 @@ import { surpriseLayout } from '../lib/surprise';
 import { BuildToolsPanel, type BuildToolCategory } from './build-tools-panel';
 import { CameraPad } from './camera-pad';
 import { CatalogStrip } from './catalog-strip';
+import { DaylightPanel } from './daylight-panel';
 import { ModePanel } from './mode-panel';
 import { RoomShapesPanel } from './room-shapes-panel';
 import { WallPaintPanel } from './wall-paint-panel';
@@ -72,6 +73,7 @@ export function BottomHud({ selectedWall, onSelectedWallChange, onOrbit, onZoom,
             scrollbarWidth: 'thin',
           }}
         >
+          <DaylightPanel />
           {/* Paint panel opens with the wall tool OR when any wall is clicked in 3D. */}
           {(view.drawWallMode || selectedWall !== null) && (
             <WallPaintPanel
@@ -133,7 +135,10 @@ export function BottomHud({ selectedWall, onSelectedWallChange, onOrbit, onZoom,
           )}
         </div>
       ) : (
-        <div />
+        // EXPLORE hides the build tools, but the light stays adjustable.
+        <div className="pc-hud-left">
+          <DaylightPanel />
+        </div>
       )}
 
       {gameMode !== 'live' ? (
